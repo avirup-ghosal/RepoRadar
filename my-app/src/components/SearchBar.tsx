@@ -1,11 +1,35 @@
 "use client";
 import axios from "axios";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import RepoCard, { Repo } from "./RepoCard";
 const RepoList = ({ data }: { data: Repo[] }) => {
+  const [length,setlength]=useState(0);
+  const [start,setstart]=useState(0);
+  const [end,setend]=useState(10);
+
+  useEffect(()=>{
+    setlength(data.length);
+  },[data]);
+  const setPage = (n: number) => {
+    setstart(n * 10);
+    setend((n + 1) * 10);
+  };
+  const cardperpage=10;
+  const noofpages = Math.ceil(length / cardperpage);
   return (
     <div className="flex flex-wrap gap-4 justify-center">
-      {data.map((element) => (
+      <div className="flex flex-wrap justify-center gap-2 mt-4">
+  {[...Array(noofpages).keys()].map((n) => (
+    <button
+      key={n}
+      onClick={() => setPage(n)}
+      className="px-3 py-1 border border-blue-500 text-blue-600 rounded hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-300 transition text-sm sm:text-base"
+    >
+      {n}
+    </button>
+  ))}
+</div>
+      {data.slice(start, end).map((element) => (
         element && element.owner ? <RepoCard key={element.id} repo={element} /> : null
       ))}
     </div>
@@ -49,7 +73,7 @@ const SearchBar = () => {
 
   return (
     <div className="flex flex-col gap-4 items-center justify-center p-6 bg-white rounded-lg shadow-md max-w-xl mx-auto">
-      <h1 className="text-2xl font-bold mb-2 text-center">
+      <h1 className="text-2xl font-bold mb-2 text-center text-orange-600">
         Search GitHub Repositories
       </h1>
 
