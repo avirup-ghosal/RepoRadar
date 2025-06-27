@@ -3,6 +3,8 @@ export type Repo = {
   id: number;
   full_name: string;
   description: string;
+  stargazers_count: number;
+  forks_count: number;
   owner: {
     login: string;
     avatar_url: string;
@@ -12,7 +14,7 @@ export type Repo = {
 
 const RepoCard = ({ repo }: { repo: Repo }) => {
   if (!repo || !repo.owner) {
-  return null; 
+  return null; // or a skeleton loader
 }
     return (
     <div className="flex flex-col gap-4 p-4 border rounded-lg shadow hover:shadow-lg transition w-full max-w-md bg-white">
@@ -40,7 +42,7 @@ const RepoCard = ({ repo }: { repo: Repo }) => {
       <p className="text-gray-700 text-sm">
         {repo.description || "No description provided."}
       </p>
-
+      <div>⭐stars: {repo.stargazers_count} 🍴forks: {repo.forks_count}</div>
       <a
         href={repo.html_url}
         target="_blank"
