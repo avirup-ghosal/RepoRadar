@@ -4,7 +4,7 @@ import { useState } from "react";
 import RepoCard, { Repo } from "./RepoCard";
 const RepoList = ({ data }: { data: Repo[] }) => {
   return (
-    <div className="item-list">
+    <div className="flex flex-wrap gap-4 justify-center">
       {data.map((element) => (
         element && element.owner ? <RepoCard key={element.id} repo={element} /> : null
       ))}
