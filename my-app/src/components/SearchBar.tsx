@@ -2,6 +2,8 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import RepoCard, { Repo } from "./RepoCard";
+
+
 const RepoList = ({ data }: { data: Repo[] }) => {
   const [length,setlength]=useState(0);
   const [start,setstart]=useState(0);

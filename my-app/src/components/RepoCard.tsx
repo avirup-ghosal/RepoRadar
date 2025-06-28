@@ -1,7 +1,13 @@
 "use client";
+
+import axios from "axios";
+import { useState } from "react";
+
 export type Repo = {
   id: number;
   full_name: string;
+  language: string;
+  readme?: string; 
   description: string;
   stargazers_count: number;
   forks_count: number;
@@ -11,10 +17,27 @@ export type Repo = {
   };
   html_url: string;
 };
-
+const Popup=({data,setPopupData}:{data:string,setPopupData:(data:string|null)=>void})=>{
+  if (!data) return null;
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-4 rounded shadow-md">
+            <h3 className="text-lg font-semibold mb-2">AI Analysis</h3>
+            <p>{data}</p>
+            <button
+              onClick={() => setPopupData(null)}
+              className="mt-4 inline-block text-white text-sm bg-red-600 hover:bg-red-700 px-4 py-2 rounded transition"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+  );
+}
 const RepoCard = ({ repo }: { repo: Repo }) => {
+  const [popupData, setPopupData] = useState<string | null>(null);
   if (!repo || !repo.owner) {
-  return null; // or a skeleton loader
+  return null; 
 }
     return (
     <div className="flex flex-col gap-4 p-4 border rounded-lg shadow hover:shadow-lg transition w-full max-w-md bg-white">
@@ -51,8 +74,33 @@ const RepoCard = ({ repo }: { repo: Repo }) => {
       >
         🔍 Explore Repository
       </a>
+      <button
+        onClick={async () => {
+          console.log(`Requesting AI analysis for ${repo.full_name}`);
+          const response = await axios.post("/api/gemini", {
+            prompt: `
+Here's a GitHub repository:
+- Name: ${repo.full_name}
+- Description: ${repo.description || "No description provided."}
+- Stars: ${repo.stargazers_count}
+- Primary Language: ${repo.language || "Unknown"}
+- README:\n${repo.readme || "No README available."}
+
+Can you summarize this repository for a beginner developer?
+`
+          });
+          setPopupData(response.data.text);
+        }}
+        className="inline-block text-white text-sm bg-green-600 hover:bg-green-700 px-4 py-2 rounded transition"
+      >
+        ✨ Analyze with AI
+      </button>
+      {popupData && (
+        <Popup data={popupData} setPopupData={setPopupData} />
+      )}
     </div>
   );
 };
 
 export default RepoCard;
+
