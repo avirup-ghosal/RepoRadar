@@ -2,10 +2,12 @@
 
 import axios from "axios";
 import { useState } from "react";
+import ReactMarkdown from "react-markdown";
 
 export type Repo = {
   id: number;
   full_name: string;
+  name: string;
   language: string;
   readme?: string; 
   description: string;
@@ -23,7 +25,7 @@ const Popup=({data,setPopupData}:{data:string,setPopupData:(data:string|null)=>v
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-4 rounded shadow-md">
             <h3 className="text-lg font-semibold mb-2">AI Analysis</h3>
-            <p>{data}</p>
+            <ReactMarkdown>{data}</ReactMarkdown>
             <button
               onClick={() => setPopupData(null)}
               className="mt-4 inline-block text-white text-sm bg-red-600 hover:bg-red-700 px-4 py-2 rounded transition"
@@ -77,6 +79,8 @@ const RepoCard = ({ repo }: { repo: Repo }) => {
       <button
         onClick={async () => {
           console.log(`Requesting AI analysis for ${repo.full_name}`);
+          const res=await axios.get(`https://api.github.com/repos/${repo.owner.login}/${repo.name}/readme`)
+          repo.readme = res.data.content ? Buffer.from(res.data.content, 'base64').toString('utf-8') : "No README available.";
           const response = await axios.post("/api/gemini", {
             prompt: `
 Here's a GitHub repository:
