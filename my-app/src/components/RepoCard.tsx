@@ -21,19 +21,22 @@ export type Repo = {
 };
 const Popup=({data,setPopupData}:{data:string,setPopupData:(data:string|null)=>void})=>{
   if (!data) return null;
+
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-4 rounded shadow-md">
-            <h3 className="text-lg font-semibold mb-2">AI Analysis</h3>
-            <ReactMarkdown>{data}</ReactMarkdown>
-            <button
-              onClick={() => setPopupData(null)}
-              className="mt-4 inline-block text-white text-sm bg-red-600 hover:bg-red-700 px-4 py-2 rounded transition"
-            >
-              Close
-            </button>
-          </div>
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4">
+      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md overflow-y-auto max-h-[90vh]">
+        <h3 className="text-xl font-semibold mb-4 text-gray-800">AI Analysis</h3>
+        <div className="prose max-w-none text-sm text-gray-700">
+          <ReactMarkdown>{data}</ReactMarkdown>
         </div>
+        <button
+          onClick={() => setPopupData(null)}
+          className="mt-6 w-full text-white bg-red-600 hover:bg-red-700 px-4 py-2 rounded transition"
+        >
+          Close
+        </button>
+      </div>
+    </div>
   );
 }
 const RepoCard = ({ repo }: { repo: Repo }) => {
