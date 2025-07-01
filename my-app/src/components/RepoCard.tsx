@@ -47,6 +47,7 @@ const RepoCard = ({ repo }: { repo: Repo }) => {
     return (
     <div className="flex flex-col gap-4 p-4 border rounded-lg shadow hover:shadow-lg transition w-full max-w-md bg-white">
       <div className="flex items-center gap-4 flex-wrap">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={repo.owner.avatar_url}
           alt={`${repo.owner.login}'s avatar`}
