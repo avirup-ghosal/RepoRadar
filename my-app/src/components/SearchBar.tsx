@@ -61,30 +61,46 @@ const SearchBar = () => {
   };
 
   const handleSearch = () => {
-    axios
-      .get("https://api.github.com/search/repositories", {
-        params: {
-          q: `${keyword} language:${language} stars:>${stars} topic:${topic}`,
-          sort,
-          order,
-        },
-      })
-      .then((response) => {
-        console.log(response.data.items);
-        setData(response.data.items);
-        resetState();
-      })
-      .catch((error) => {
-        console.error("GitHub API error:", error);
-      });
+  let query = "";
+
+  if (keyword) query += `${keyword} `;
+  if (language) query += `language:${language} `;
+  if (stars) query += `stars:>${stars} `;
+  if (topic) query += `topic:${topic} `;
+  
+  query = query.trim();
+
+  const params: Record<string, string|number> = {
+    q: query || "stars:>1", 
+    per_page: 100, 
   };
+  
+  if (sort) params.sort = sort;
+  if (order) params.order = order;
+
+  axios
+    .get("https://api.github.com/search/repositories", { params })
+    .then((response) => {
+      console.log(response.data.items);
+      setData(response.data.items);
+      resetState();
+    })
+    .catch((error) => {
+      console.error("GitHub API error:", error);
+    });
+};
 
   return (
     <div className="flex flex-col gap-4 items-center justify-center p-6 bg-white rounded-lg shadow-md max-w-xl mx-auto border border-gray-200">
       <h1 className="text-2xl font-bold mb-2 text-center text-[#0969da]">
         Search GitHub Repositories
       </h1>
-
+      <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 text-center">
+        Use the filters below to find repositories that match your interests. All fields are necessary.
+      </p>
+      <label className="text-sm text-gray-500 dark:text-gray-400 text-left w-full">
+        keyword
+      </label>
       <input
         type="text"
         placeholder="🔍 Keyword (e.g. react)"
@@ -92,7 +108,9 @@ const SearchBar = () => {
         value={keyword}
         onChange={(e) => setKeyword(e.target.value)}
       />
-
+      <label className="text-sm text-gray-500 dark:text-gray-400 text-left w-full">
+        language
+      </label>
       <input
         type="text"
         placeholder="💻 Language (e.g. javascript)"
@@ -100,7 +118,9 @@ const SearchBar = () => {
         value={language}
         onChange={(e) => setLanguage(e.target.value)}
       />
-
+      <label className="text-sm text-gray-500 dark:text-gray-400 text-left w-full">
+        stars
+      </label>
       <input
         type="number"
         placeholder="⭐ Min Stars (e.g. 1000)"
@@ -108,7 +128,9 @@ const SearchBar = () => {
         value={stars}
         onChange={(e) => setStars(Number(e.target.value))}
       />
-
+      <label className="text-sm text-gray-500 dark:text-gray-400 text-left w-full">
+        topic
+      </label>
       <input
         type="text"
         placeholder="🏷 Topic (e.g. web3)"

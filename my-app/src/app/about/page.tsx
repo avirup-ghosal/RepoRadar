@@ -48,7 +48,7 @@ const AboutPage=()=> {
 
 
       <p className="text-sm text-gray-500 dark:text-gray-400">
-        &copy; {new Date().getFullYear()} GitHub Explorer. Built with using
+        &copy; {new Date().getFullYear()} RepoRadar. Built with using
         Next.js, Tailwind CSS, and Gemini API.
       </p>
     </main>
