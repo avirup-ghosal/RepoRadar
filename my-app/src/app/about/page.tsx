@@ -40,7 +40,7 @@ const AboutPage=()=> {
       <p className="text-base leading-relaxed mb-6">
         RepoRadar is ideal for:
       </p>
-      <ul className="list-disc list-inside space-y-2 text-base">
+      <ul className="list-disc list-inside space-y-2 text-base mb-4">
         <li>Students and beginners trying to understand open-source projects</li>
         <li>Developers searching for starter repos or tech inspiration</li>
         <li>Teams wanting to quickly evaluate project quality and structure</li>
