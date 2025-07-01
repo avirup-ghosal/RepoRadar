@@ -13,7 +13,7 @@ const AboutPage=()=> {
       <p className="text-lg mb-6 leading-relaxed">
         RepoRadar is a web-based application that enables developers to
         search, filter, and explore open-source repositories from GitHub using
-        a clean and responsive UI. Whether you're looking for trending
+        a clean and responsive UI. Whether you&apos;re looking for trending
         projects, tech stacks, or inspiration, RepoRadar gives you a
         powerful and simple interface to do it.
       </p>
@@ -32,7 +32,7 @@ const AboutPage=()=> {
            <strong>Responsive Design:</strong> Optimized for all screen sizes using Tailwind CSS.
         </li>
         <li>
-           <strong>Powered by GitHub API:</strong> Real-time data fetched directly from GitHub’s REST API.
+           <strong>Powered by GitHub API:</strong> Real-time data fetched directly from GitHub&apos;s REST API.
         </li>
       </ul>
 
