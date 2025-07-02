@@ -42,7 +42,7 @@ jobs:
           sudo docker rm my-nextjs-app || true
 
       - name: Remove old image
-        run: sudo docker rmi $IMAGE_NAME:$IMAGE_TAG || true
+        run: sudo docker rmi -f $IMAGE_NAME:$IMAGE_TAG || true
 
       - name: Run Docker container
         run: |
