@@ -10,7 +10,7 @@ COPY . .
 RUN npm run build
 
 # Stage 2: Run with distroless Node 20
-FROM gcr.io/distroless/nodejs:20
+FROM gcr.io/distroless/nodejs20-debian12
 
 WORKDIR /app
 
