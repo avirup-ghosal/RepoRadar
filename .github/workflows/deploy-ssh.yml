@@ -1,4 +1,4 @@
-name: SSH Deploy to EC2
+name: Build & SSH Deploy to EC2
 
 on:
   push:
@@ -10,9 +10,26 @@ env:
   IMAGE_TAG: latest
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
+
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create .env.local
+        working-directory: ./my-app
+        run: echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" > .env.local
+
+      - name: Login to Docker Hub
+        run: echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
+
+      - name: Build Docker image
+        run: docker build -t $IMAGE_NAME:$IMAGE_TAG ./my-app
+
+      - name: Push Docker image
+        run: docker push $IMAGE_NAME:$IMAGE_TAG
+
       - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
