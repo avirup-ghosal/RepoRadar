@@ -1,0 +1,36 @@
+name: SSH Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  IMAGE_NAME: ${{ secrets.DOCKER_HUB_USERNAME }}/my-nextjs-app
+  IMAGE_TAG: latest
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy over SSH
+        run: |
+          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" -p "${{ secrets.DOCKER_HUB_TOKEN }}"
+            docker pull $IMAGE_NAME:$IMAGE_TAG
+            docker stop my-nextjs-app || true
+            docker rm my-nextjs-app || true
+            docker rmi -f $IMAGE_NAME:$IMAGE_TAG || true
+            docker run -d \
+              -p 3006:3000 \
+              --name my-nextjs-app \
+              -e GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }} \
+              $IMAGE_NAME:$IMAGE_TAG
+          EOF
