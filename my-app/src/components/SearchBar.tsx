@@ -49,7 +49,9 @@ const SearchBar = () => {
   const [topic, setTopic] = useState("");
   const [sort, setSort] = useState("stars");
   const [order, setOrder] = useState("desc");
-  const [data, setData] = useState(null);
+  const [data, setData] = useState<Repo[] | null>(null);
+  const [loading, setLoading] = useState(false); 
+  const [error, setError] = useState<string | null>(null); 
 
   const resetState = () => {
     setKeyword("");
@@ -60,35 +62,37 @@ const SearchBar = () => {
     setOrder("desc");
   };
 
-  const handleSearch = () => {
-  let query = "";
+  const handleSearch = async () => {
+    let query = "";
 
-  if (keyword) query += `${keyword} `;
-  if (language) query += `language:${language} `;
-  if (stars) query += `stars:>${stars} `;
-  if (topic) query += `topic:${topic} `;
-  
-  query = query.trim();
+    if (keyword) query += `${keyword} `;
+    if (language) query += `language:${language} `;
+    if (stars) query += `stars:>${stars} `;
+    if (topic) query += `topic:${topic} `;
+    query = query.trim();
 
-  const params: Record<string, string|number> = {
-    q: query || "stars:>1", 
-    per_page: 100, 
-  };
-  
-  if (sort) params.sort = sort;
-  if (order) params.order = order;
+    const params: Record<string, string | number> = {
+      q: query || "stars:>1",
+      per_page: 100,
+    };
 
-  axios
-    .get("https://api.github.com/search/repositories", { params })
-    .then((response) => {
+    if (sort) params.sort = sort;
+    if (order) params.order = order;
+
+    try {
+      setLoading(true); 
+      setError(null);
+      const response = await axios.get("https://api.github.com/search/repositories", { params });
       console.log(response.data.items);
       setData(response.data.items);
       resetState();
-    })
-    .catch((error) => {
-      console.error("GitHub API error:", error);
-    });
-};
+    } catch (err) {
+      console.error("GitHub API error:", err);
+      setError("Failed to fetch repositories. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-4 items-center justify-center p-6 bg-white rounded-lg shadow-md max-w-xl mx-auto border border-gray-200">
@@ -98,9 +102,8 @@ const SearchBar = () => {
       <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 text-center">
         Use the filters below to find repositories that match your interests. All fields are necessary.
       </p>
-      <label className="text-sm text-gray-500 dark:text-gray-400 text-left w-full">
-        keyword
-      </label>
+
+      <label className="text-sm text-gray-500 dark:text-gray-400 text-left w-full">Keyword</label>
       <input
         type="text"
         placeholder="🔍 Keyword (e.g. react)"
@@ -108,9 +111,8 @@ const SearchBar = () => {
         value={keyword}
         onChange={(e) => setKeyword(e.target.value)}
       />
-      <label className="text-sm text-gray-500 dark:text-gray-400 text-left w-full">
-        language
-      </label>
+
+      <label className="text-sm text-gray-500 dark:text-gray-400 text-left w-full">Language</label>
       <input
         type="text"
         placeholder="💻 Language (e.g. javascript)"
@@ -118,9 +120,8 @@ const SearchBar = () => {
         value={language}
         onChange={(e) => setLanguage(e.target.value)}
       />
-      <label className="text-sm text-gray-500 dark:text-gray-400 text-left w-full">
-        stars
-      </label>
+
+      <label className="text-sm text-gray-500 dark:text-gray-400 text-left w-full">Stars</label>
       <input
         type="number"
         placeholder="⭐ Min Stars (e.g. 1000)"
@@ -128,9 +129,8 @@ const SearchBar = () => {
         value={stars}
         onChange={(e) => setStars(Number(e.target.value))}
       />
-      <label className="text-sm text-gray-500 dark:text-gray-400 text-left w-full">
-        topic
-      </label>
+
+      <label className="text-sm text-gray-500 dark:text-gray-400 text-left w-full">Topic</label>
       <input
         type="text"
         placeholder="🏷 Topic (e.g. web3)"
@@ -162,12 +162,27 @@ const SearchBar = () => {
 
       <button
         onClick={handleSearch}
-        className="bg-[#2da44e] hover:bg-[#218739] text-white px-4 py-2 rounded transition w-full"
+        disabled={loading}
+        className={`${
+          loading ? "bg-gray-400 cursor-not-allowed" : "bg-[#2da44e] hover:bg-[#218739]"
+        } text-white px-4 py-2 rounded transition w-full`}
       >
-        🔍 Search
+        {loading ? "⏳ Searching..." : "🔍 Search"}
       </button>
 
-      <RepoList data={data || []} />
+      {/* 👇 Loading / Error / Results */}
+      {loading && (
+        <div className="flex justify-center items-center mt-6">
+          <div className="w-6 h-6 border-4 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+          <span className="ml-2 text-blue-600 font-medium">Fetching repositories...</span>
+        </div>
+      )}
+
+      {error && (
+        <p className="text-red-500 mt-4 text-sm text-center">{error}</p>
+      )}
+
+      {!loading && !error && data && <RepoList data={data} />}
     </div>
   );
 };

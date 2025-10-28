@@ -9,7 +9,7 @@ export type Repo = {
   full_name: string;
   name: string;
   language: string;
-  readme?: string; 
+  readme?: string;
   description: string;
   stargazers_count: number;
   forks_count: number;
@@ -19,7 +19,14 @@ export type Repo = {
   };
   html_url: string;
 };
-const Popup=({data,setPopupData}:{data:string,setPopupData:(data:string|null)=>void})=>{
+
+const Popup = ({
+  data,
+  setPopupData,
+}: {
+  data: string;
+  setPopupData: (data: string | null) => void;
+}) => {
   if (!data) return null;
 
   return (
@@ -38,13 +45,50 @@ const Popup=({data,setPopupData}:{data:string,setPopupData:(data:string|null)=>v
       </div>
     </div>
   );
-}
+};
+
 const RepoCard = ({ repo }: { repo: Repo }) => {
   const [popupData, setPopupData] = useState<string | null>(null);
-  if (!repo || !repo.owner) {
-  return null; 
-}
-    return (
+  const [loading, setLoading] = useState<boolean>(false);
+
+  if (!repo || !repo.owner) return null;
+
+  const handleAIAnalysis = async () => {
+    try {
+      setLoading(true);
+      console.log(`Requesting AI analysis for ${repo.full_name}`);
+
+      const res = await axios.get(
+        `https://api.github.com/repos/${repo.owner.login}/${repo.name}/readme`
+      );
+
+      repo.readme = res.data.content
+        ? Buffer.from(res.data.content, "base64").toString("utf-8")
+        : "No README available.";
+
+      const response = await axios.post("/api/gemini", {
+        prompt: `
+Here's a GitHub repository:
+- Name: ${repo.full_name}
+- Description: ${repo.description || "No description provided."}
+- Stars: ${repo.stargazers_count}
+- Primary Language: ${repo.language || "Unknown"}
+- README:\n${repo.readme || "No README available."}
+
+Can you summarize this repository for a beginner developer?
+`,
+      });
+
+      setPopupData(response.data.text);
+    } catch (error) {
+      console.error("Error during AI analysis:", error);
+      alert("Something went wrong while analyzing the repository.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
     <div className="flex flex-col gap-4 p-4 border rounded-lg shadow hover:shadow-lg transition w-full max-w-md bg-white">
       <div className="flex items-center gap-4 flex-wrap">
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -71,7 +115,10 @@ const RepoCard = ({ repo }: { repo: Repo }) => {
       <p className="text-gray-700 text-sm">
         {repo.description || "No description provided."}
       </p>
-      <div>⭐stars: {repo.stargazers_count} 🍴forks: {repo.forks_count}</div>
+      <div>
+        ⭐ stars: {repo.stargazers_count} 🍴 forks: {repo.forks_count}
+      </div>
+
       <a
         href={repo.html_url}
         target="_blank"
@@ -80,35 +127,48 @@ const RepoCard = ({ repo }: { repo: Repo }) => {
       >
         🔍 Explore Repository
       </a>
-      <button
-        onClick={async () => {
-          console.log(`Requesting AI analysis for ${repo.full_name}`);
-          const res=await axios.get(`https://api.github.com/repos/${repo.owner.login}/${repo.name}/readme`)
-          repo.readme = res.data.content ? Buffer.from(res.data.content, 'base64').toString('utf-8') : "No README available.";
-          const response = await axios.post("/api/gemini", {
-            prompt: `
-Here's a GitHub repository:
-- Name: ${repo.full_name}
-- Description: ${repo.description || "No description provided."}
-- Stars: ${repo.stargazers_count}
-- Primary Language: ${repo.language || "Unknown"}
-- README:\n${repo.readme || "No README available."}
 
-Can you summarize this repository for a beginner developer?
-`
-          });
-          setPopupData(response.data.text);
-        }}
-        className="inline-block text-white text-sm bg-green-600 hover:bg-green-700 px-4 py-2 rounded transition"
+      <button
+        onClick={handleAIAnalysis}
+        disabled={loading}
+        className={`inline-block text-white text-sm ${
+          loading
+            ? "bg-gray-500 cursor-not-allowed"
+            : "bg-green-600 hover:bg-green-700"
+        } px-4 py-2 rounded transition flex items-center justify-center`}
       >
-        ✨ Analyze with AI
+        {loading ? (
+          <>
+            <svg
+              className="animate-spin h-4 w-4 mr-2 text-white"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l3 3-3 3v-4a8 8 0 01-8-8z"
+              ></path>
+            </svg>
+            Analyzing...
+          </>
+        ) : (
+          "✨ Analyze with AI"
+        )}
       </button>
-      {popupData && (
-        <Popup data={popupData} setPopupData={setPopupData} />
-      )}
+
+      {popupData && <Popup data={popupData} setPopupData={setPopupData} />}
     </div>
   );
 };
 
 export default RepoCard;
-
