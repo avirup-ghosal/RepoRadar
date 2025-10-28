@@ -4,7 +4,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 // simple delay utility for retry
-const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
 export async function POST(req: Request) {
   try {
@@ -13,24 +13,25 @@ export async function POST(req: Request) {
 
     // retry up to 3 times if the model is overloaded (503)
     let attempts = 0;
-    let lastError: any;
 
     while (attempts < 3) {
       try {
-        const result = await model.generateContent(body.prompt);
-        const response = await result.response;
+        const result = await model.generateContent(body.prompt as string);
+        const response = result.response;
         const text = await response.text();
 
         console.log("Gemini response:", text);
         return NextResponse.json({ text });
-      } catch (err: any) {
+      } catch (err: unknown) {
         attempts++;
-        const msg = err?.message || "";
+        const msg =
+          err instanceof Error ? err.message : JSON.stringify(err);
 
         // handle transient model overloads
         if (msg.includes("503") || msg.includes("overloaded")) {
-          console.warn(`Gemini model overloaded (attempt ${attempts}/3). Retrying...`);
-          lastError = err;
+          console.warn(
+            `Gemini model overloaded (attempt ${attempts}/3). Retrying...`
+          );
           await delay(2000); // wait 2 seconds before retry
           continue;
         }
@@ -44,8 +45,11 @@ export async function POST(req: Request) {
         }
 
         // handle any other type of error immediately
-        lastError = err;
-        break;
+        console.error("Gemini API unknown error:", msg);
+        return NextResponse.json(
+          { error: msg || "Unexpected error from Gemini API." },
+          { status: 500 }
+        );
       }
     }
 
@@ -54,10 +58,10 @@ export async function POST(req: Request) {
       { error: "Gemini model is overloaded. Please try again later." },
       { status: 503 }
     );
-
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Gemini API Error:", error);
-    const message = error instanceof Error ? error.message : "Unknown error";
+    const message =
+      error instanceof Error ? error.message : "Unknown error occurred";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
