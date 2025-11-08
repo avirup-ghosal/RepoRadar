@@ -20,6 +20,7 @@ export type Repo = {
   html_url: string;
 };
 
+// Popup component stays unchanged
 const Popup = ({
   data,
   setPopupData,
@@ -58,25 +59,30 @@ const RepoCard = ({ repo }: { repo: Repo }) => {
       setLoading(true);
       console.log(`Requesting AI analysis for ${repo.full_name}`);
 
+      // Fetch README from GitHub
       const res = await axios.get(
         `https://api.github.com/repos/${repo.owner.login}/${repo.name}/readme`
       );
 
-      repo.readme = res.data.content
+      const readme = res.data.content
         ? Buffer.from(res.data.content, "base64").toString("utf-8")
         : "No README available.";
 
-      const response = await axios.post("/api/gemini", {
-        prompt: `
-Here's a GitHub repository:
-- Name: ${repo.full_name}
-- Description: ${repo.description || "No description provided."}
-- Stars: ${repo.stargazers_count}
-- Primary Language: ${repo.language || "Unknown"}
-- README:\n${repo.readme || "No README available."}
+      // Basic sanitization — strips code blocks and role-injection markers
+      const sanitizedReadme = readme
+        .replace(/```.*?```/gs, "[code removed]")
+        .replace(/(system:|user:|assistant:)/gi, "[role removed]")
+        .slice(0, 5000);
 
-Can you summarize this repository for a beginner developer?
-`,
+      // 🔒 Send only structured data — backend will build the full prompt
+      const response = await axios.post("/api/gemini", {
+       repoData: {
+    full_name: repo.full_name,
+    description: repo.description,
+    stars: repo.stargazers_count, // ✅ match backend field name
+    language: repo.language,
+    readme: sanitizedReadme,
+  },
       });
 
       setPopupData(response.data.text);
