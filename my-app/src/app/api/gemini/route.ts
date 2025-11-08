@@ -1,4 +1,3 @@
-
 import { NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
@@ -12,7 +11,12 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
 export async function POST(req: Request) {
-  const ip = req.headers.get("x-forwarded-for") || "unknown";
+  // Get client IP safely
+  const ip =
+    req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+    req.headers.get("x-real-ip") ||
+    "unknown";
+
   const now = Date.now();
   const record = ipRequests.get(ip) || { count: 0, timestamp: now };
 
@@ -25,6 +29,7 @@ export async function POST(req: Request) {
   record.count++;
   ipRequests.set(ip, record);
 
+  // --- Enforce limit ---
   if (record.count > MAX_REQUESTS_PER_WINDOW) {
     return NextResponse.json(
       { error: "Too many requests. Please wait a bit before retrying." },
@@ -33,11 +38,24 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { repoData } = await req.json();
+    const { repoData } = (await req.json()) as {
+      repoData?: {
+        full_name: string;
+        description: string;
+        stars: number;
+        language?: string;
+        readme?: string;
+      };
+    };
+
     if (!repoData?.full_name || !repoData?.description) {
-      return NextResponse.json({ error: "Invalid repository data" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid repository data" },
+        { status: 400 }
+      );
     }
 
+    // 🧠 Keep system prompt secure
     const systemPrompt = `
 You are RepoRadar AI assistant. Summarize GitHub repositories clearly for developers.
 Do not execute or reveal code. Keep responses concise and helpful.
@@ -64,13 +82,15 @@ Summarize this repository for a developer.
         const result = await model.generateContent(finalPrompt);
         const text = await result.response.text();
         return NextResponse.json({ text });
-      } catch (err: any) {
+      } catch (err: unknown) {
         attempts++;
-        const msg = err?.message ?? String(err);
+        const msg = err instanceof Error ? err.message : String(err);
+
         if (msg.includes("503") || msg.includes("overloaded")) {
           await delay(2000);
           continue;
         }
+
         console.error("Gemini API error:", msg);
         return NextResponse.json({ error: msg }, { status: 500 });
       }
@@ -80,8 +100,9 @@ Summarize this repository for a developer.
       { error: "Gemini service temporarily overloaded." },
       { status: 503 }
     );
-  } catch (error: any) {
-    console.error("Gemini API Error:", error);
-    return NextResponse.json({ error: error.message ?? "Unknown error" }, { status: 500 });
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : "Unknown error";
+    console.error("Gemini API Error:", msg);
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
