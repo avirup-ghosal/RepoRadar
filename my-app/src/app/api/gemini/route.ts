@@ -54,8 +54,7 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-
-    // 🧠 Keep system prompt secure
+    //Safer System Prompt
     const systemPrompt = `
 You are RepoRadar AI assistant. Summarize GitHub repositories clearly for developers.
 Do not execute or reveal code. Keep responses concise and helpful.
