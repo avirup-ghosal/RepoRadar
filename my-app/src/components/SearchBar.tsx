@@ -82,7 +82,7 @@ const SearchBar = () => {
     try {
       setLoading(true); 
       setError(null);
-      const response = await axios.get("https://api.github.com/search/repositories", { params });
+      const response = await axios.get("/api/github", { params });
       console.log(response.data.items);
       setData(response.data.items);
       resetState();
