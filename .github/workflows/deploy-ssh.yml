@@ -51,5 +51,6 @@ jobs:
               -p 3006:3000 \
               --name my-nextjs-app \
               -e GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }} \
+              -e REPO_TOKEN='${{secrets.REPO_TOKEN}}' \
               $IMAGE_NAME:$IMAGE_TAG
           EOF

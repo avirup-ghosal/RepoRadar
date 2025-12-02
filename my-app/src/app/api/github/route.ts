@@ -14,6 +14,10 @@ export async function GET(req:NextRequest){
     }
 
     try{
+        if (!process.env.REPO_TOKEN) {
+        console.error("CONFIG ERROR: REPO_TOKEN is missing from environment variables.");
+        return NextResponse.json({ error: "Server Configuration Error" }, { status: 500 });
+        }   
         const response=await axios.get("https://api.github.com/search/repositories",{
             params:{
                 q:query,
@@ -28,14 +32,18 @@ export async function GET(req:NextRequest){
         });
 
         return NextResponse.json(response.data);
-    }catch(error: unknown){
-        if(axios.isAxiosError(error) && error.response){
+    }catch (error: unknown) {
+        if (axios.isAxiosError(error)) {
+            console.error("GitHub API Error Message:", error.message);
+            console.error("GitHub API Status:", error.response?.status);
+            
             return NextResponse.json(
-                {error: error.response.data.message || error.message},
-                {status:error.response.status}
+                { error: error.response?.data?.message || error.message },
+                { status: error.response?.status || 500 }
             );
         }
 
-        return NextResponse.json({error: "Internal Server Error"},{status:500});
+        console.error("Unknown Error:", error instanceof Error ? error.message : "Unknown");
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
